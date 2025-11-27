@@ -26,6 +26,7 @@ class Codegen:
         self.assembly_code.append('.align 2')
         self.assembly_code.append('')
         self.assembly_code.append('_main:')
+        # allocate space for c library (printf)
         self.assembly_code.append('    sub sp, sp, #32')
         self.assembly_code.append('    stp x29, x30, [sp, #16]')
         self.assembly_code.append('    add x29, sp, #16')
