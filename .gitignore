@@ -1,0 +1,44 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Build artifacts
+compiler/build/*.o
+compiler/build/*.s
+compiler/build/program
+compiler/build/output
+compiler/build/test_printf
+compiler/build/test_c
+compiler/build/*.out
+
+# Keep the build directory itself but ignore contents
+!compiler/build/.gitkeep
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.cursor/
+.idea/
+*.swp
+*.swo
+*~
+
+# Virtual environments (if you add one later)
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# Test artifacts
+*.test
+test_output/
