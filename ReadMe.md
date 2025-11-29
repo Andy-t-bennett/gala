@@ -81,3 +81,21 @@ ld -o program output.o -lSystem -syslibroot `xcrun -sdk macosx --show-sdk-path` 
 
 run
 ./program
+
+TODO:
+- declare stack
+ - declare heap
+- move
+- spill 
+- copy
+- free
+
+- functions
+- return
+- if/else
+- loops
+
+- rest of operators
+
+- data structures (array, struct, strings)
+
