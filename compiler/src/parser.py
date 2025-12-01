@@ -1,4 +1,4 @@
-from ast_nodes import RegisterDecleration, VariableAssignment, AddOperator, PrintFunction
+from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc
 from tokens import TokenType
 
 class Parser:
@@ -14,10 +14,12 @@ class Parser:
 
             if token.type == TokenType.REG:
                 program.statements.append(self._parse_register_decleration())
-            elif token.type == TokenType.PRINT:
-                program.statements.append(self._parse_print_function())
+            elif token.type == TokenType.STACK:
+                program.statements.append(self._parse_stack_decleration())
             elif token.type == TokenType.IDENTIFIER:
                 program.statements.append(self._parse_variable_assignment())
+            elif token.type == TokenType.ALLOC:
+                program.statements.append(self._parse_memory_allocation())
             else:
                 self.position += 1
 
@@ -26,6 +28,7 @@ class Parser:
     def _parse_register_decleration(self):
         registerDecleration = RegisterDecleration()
         registerDecleration.register = self.tokens[self.position].value
+        registerDecleration.storage = "register"
         self.position += 1
 
         if self.tokens[self.position].type == TokenType.IDENTIFIER:
@@ -72,6 +75,46 @@ class Parser:
             raise SyntaxError("REGISTER DECLERATION: Expecting Value")
 
         return registerDecleration
+
+    def _parse_stack_decleration(self):
+        stackDecleration = StackDecleration()
+        stackDecleration.register = self.tokens[self.position].value
+        stackDecleration.storage = "stack"
+        self.position += 1
+
+        if self.tokens[self.position].type == TokenType.IDENTIFIER:
+            stackDecleration.name = self.tokens[self.position].value
+            self.position += 1
+        else:
+            raise SyntaxError("STACK DECLERATION: Expected identifier")
+
+        if self.tokens[self.position].type == TokenType.COLON:
+            self.position += 1
+        else:
+            raise SyntaxError("STACK DECLERATION: Expected colon")
+
+        # Types
+        if self.tokens[self.position].type == TokenType.INT8 or self.tokens[self.position].type == TokenType.UINT8 or self.tokens[self.position].type == TokenType.BOOL or self.tokens[self.position].type == TokenType.CHAR:
+            stackDecleration.type = self.tokens[self.position].value
+            self.position += 1
+        else:
+            raise SyntaxError("STACK DECLERATION: Expected Type")
+
+        if self.tokens[self.position].type == TokenType.EQUALS:
+            self.position += 1
+        else:
+            raise SyntaxError("STACK DECLERATION: Expected =")
+
+        # value
+        if self.tokens[self.position].type == TokenType.NUMBER or self.tokens[self.position].type == TokenType.CHARACTER or self.tokens[self.position].type == TokenType.TRUE or self.tokens[self.position].type == TokenType.FALSE:
+            stackDecleration.value = self.tokens[self.position].value
+            self.position += 1
+        elif self.tokens[self.position].type == TokenType.ADD:
+            stackDecleration.value = self._parse_add_operator()
+        else:
+            raise SyntaxError("STACK DECLERATION: Expecting Value")
+
+        return stackDecleration
 
     def _parse_variable_assignment(self):
         variableAssignment = VariableAssignment()
@@ -133,28 +176,39 @@ class Parser:
 
         return addOperator
 
-    def _parse_print_function(self):
-        printFunction = PrintFunction()
+    def _parse_memory_allocation(self):
+        memoryAlloc = MemoryAlloc()
         self.position += 1
 
         if self.tokens[self.position].type == TokenType.L_PAREN:
             self.position += 1
         else:
-            raise SyntaxError("PRINT FUNCTION: Expected (")
+            raise SyntaxError("ALLOC: Expected (")
 
-        if self.tokens[self.position].type == TokenType.NUMBER or self.tokens[self.position].type == TokenType.CHARACTER or self.tokens[self.position].type == TokenType.TRUE or self.tokens[self.position].type == TokenType.FALSE or self.tokens[self.position].type == TokenType.IDENTIFIER:
-            printFunction.statement = self.tokens[self.position].value
-            printFunction.statement_type = self.tokens[self.position].type
+        if self.tokens[self.position].type == TokenType.STACK:
+            memoryAlloc.storage = "stack"
             self.position += 1
         else:
-            raise SyntaxError("PRINT FUNCTION: Expected statement")
+            raise SyntaxError("ALLOC: Expected a storage type")
+
+        if self.tokens[self.position].type == TokenType.COMA:
+            self.position += 1
+        else:
+            raise SyntaxError("ALLOC: Expected ,")
+
+        if self.tokens[self.position].type == TokenType.NUMBER:
+            memoryAlloc.value = self.tokens[self.position].value
+            self.position += 1
+        else:
+            raise SyntaxError("ALLOC: Expected a byte allocation")
 
         if self.tokens[self.position].type == TokenType.R_PAREN:
             self.position += 1
         else:
-            raise SyntaxError("PRINT FUNCTION: Expected )")
+            raise SyntaxError("ALLOC: Expected )")
 
-        return printFunction
+        return memoryAlloc
+
 
 class Program:
     def __init__(self, statements=None):

@@ -1,41 +1,41 @@
 from tokens import TokenType
-from ast_nodes import RegisterDecleration, VariableAssignment, AddOperator, PrintFunction
+from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc
 
 # TODO handle error handling here
 class SemanticError(Exception):
     pass
 
 class SemanticAnalyzer:
+    RESERVED_KEYWORDS = [
+        'int8',
+        'uint8',
+        'char',
+        'bool',
+        'reg',
+        'true',
+        'false',
+        'add',
+        'stack',
+        'alloc'
+    ]
+
     def __init__(self):
         self.symbol_table = {}
         self.used_registers = set()
-
+        
     def analyze(self, program):
         for statement in program.statements:
             if isinstance(statement, RegisterDecleration):
                 self._analyze_register_declaration(statement)
+            elif isinstance(statement, StackDecleration):
+                self._analyze_stack_decleration(statement)
             elif isinstance(statement, VariableAssignment):
                 self._analyze_variable_assignment(statement)
-            elif isinstance(statement, PrintFunction):
-                self._analyze_print_function(statement)
 
         return self.symbol_table
 
     def _analyze_register_declaration(self, statement):
-        reserved_words = [
-            'int8',
-            'uint8',
-            'char',
-            'bool',
-            'reg',
-            'print',
-            'true',
-            'false',
-            'add',
-            'sub'
-        ]
-
-        if statement.name in reserved_words:
+        if statement.name in self.RESERVED_KEYWORDS:
             raise SemanticError(f"Variable '{statement.name}' cannot be a reserved word")
 
         if statement.name in self.symbol_table:
@@ -47,32 +47,43 @@ class SemanticAnalyzer:
         self.used_registers.add(statement.register)
 
         if statement.type == "int8":
-            number = int(statement.value)
+            if isinstance(statement.value, AddOperator):
+                number = self._analyze_add_operator(statement.name, statement.type, statement.value.left, statement.value.right)
+            else:
+                number = int(statement.value)
+            
             if number >= -128 and number <= 127:
                 self.symbol_table[statement.name] = {
                     "type": statement.type,
+                    "storage": "register",
                     "register": statement.register,
-                    "value": statement.value
+                    "value": number  
                 }
             else:
-                raise SemanticError(f"{statement.value} is outside of range for type int8")
+                raise SemanticError(f"{number} is outside of range for type int8")
 
         elif statement.type == "uint8":
-            number = int(statement.value)
+            if isinstance(statement.value, AddOperator):
+                number = self._analyze_add_operator(statement.name, statement.type, statement.value.left, statement.value.right)
+            else:
+                number = int(statement.value)
+            
             if number >= 0 and number <= 255:
                 self.symbol_table[statement.name] = {
                     "type": statement.type,
+                    "storage": "register",
                     "register": statement.register,
-                    "value": statement.value
+                    "value": number  
                 }
             else:
-                raise SemanticError(f"{statement.value} is outside of range for type uint8")
+                raise SemanticError(f"{number} is outside of range for type uint8")
 
         elif statement.type == "char":
             character = statement.value
             if len(character) == 1:
                 self.symbol_table[statement.name] = {
                     "type": statement.type,
+                    "storage": "register",
                     "register": statement.register,
                     "value": statement.value
                 }
@@ -84,7 +95,72 @@ class SemanticAnalyzer:
             if boolean == "true" or boolean == "false":
                 self.symbol_table[statement.name] = {
                     "type": statement.type,
+                    "storage": "register",
                     "register": statement.register,
+                    "value": statement.value
+                }
+            else:
+                raise SemanticError(f"Only true or false values allowed for boolean type")
+
+        else:
+            raise SemanticError(f"No Type declared")
+
+    def _analyze_stack_decleration(self, statement):
+        if statement.name in self.RESERVED_KEYWORDS:
+            raise SemanticError(f"Variable '{statement.name}' cannot be a reserved word")
+
+        if statement.name in self.symbol_table:
+            raise SemanticError(f"Variable '{statement.name}' already declared")
+
+        if statement.type == "int8":
+            if isinstance(statement.value, AddOperator):
+                number = self._analyze_add_operator(statement.name, statement.type, statement.value.left, statement.value.right)
+            else:
+                number = int(statement.value)
+            
+            if number >= -128 and number <= 127:
+                self.symbol_table[statement.name] = {
+                    "type": statement.type,
+                    "storage": "register",
+                    "register": statement.register,
+                    "value": number  
+                }
+            else:
+                raise SemanticError(f"{number} is outside of range for type int8")
+
+        elif statement.type == "uint8":
+            if isinstance(statement.value, AddOperator):
+                number = self._analyze_add_operator(statement.name, statement.type, statement.value.left, statement.value.right)
+            else:
+                number = int(statement.value)
+            
+            if number >= 0 and number <= 255:
+                self.symbol_table[statement.name] = {
+                    "type": statement.type,
+                    "storage": "register",
+                    "register": statement.register,
+                    "value": number  
+                }
+            else:
+                raise SemanticError(f"{number} is outside of range for type uint8")
+
+        elif statement.type == "char":
+            character = statement.value
+            if len(character) == 1:
+                self.symbol_table[statement.name] = {
+                    "type": statement.type,
+                    "storage": "stack",
+                    "value": statement.value
+                }
+            else:
+                raise SemanticError(f"Only 1 character allowed for type CHAR")
+
+        elif statement.type == "bool":
+            boolean = statement.value
+            if boolean == "true" or boolean == "false":
+                self.symbol_table[statement.name] = {
+                    "type": statement.type,
+                    "storage": "stack",
                     "value": statement.value
                 }
             else:
@@ -107,28 +183,8 @@ class SemanticAnalyzer:
                 number = int(self.symbol_table[statement.value]["value"])
             
             elif isinstance(statement.value, AddOperator):
-                if statement.value.left in self.symbol_table:
-                    if self.symbol_table[statement.value.left]["type"] == self.symbol_table[statement.identifier]["type"]:
-                        number = int(self.symbol_table[statement.value.left]["value"])
-                    else:
-                        raise SemanticError(f"Cannot assign value of type {self.symbol_table[statement.value.left]["type"]} to a variable of type {self.symbol_table[statement.identifier]["type"]}")
-                else:
-                    if int(statement.value.left) >= -128 and int(statement.value.left) <= 127:
-                        number = int(statement.value.left)
-                    else:
-                        raise SemanticError(f"{statement.value.left} is outside of range for type int8")
-
-                if statement.value.right in self.symbol_table:
-                    if self.symbol_table[statement.value.right]["type"] == self.symbol_table[statement.identifier]["type"]:
-                        number += int(self.symbol_table[statement.value.right]["value"])
-                    else:
-                        raise SemanticError(f"Cannot assign value of type {self.symbol_table[statement.value.right]["type"]} to a variable of type {self.symbol_table[statement.identifier]["type"]}")
-                else:
-                    if int(statement.value.right) >= -128 and int(statement.value.right) <= 127:
-                        number += int(statement.value.right)
-                    else:
-                        raise SemanticError(f"{statement.value.right} is outside of range for type int8")
-
+                number = self._analyze_add_operator(statement.identifier, self.symbol_table[statement.identifier]["type"], statement.value.left, statement.value.right)
+            
             else:
                 number = int(statement.value)
 
@@ -146,27 +202,8 @@ class SemanticAnalyzer:
                     raise SemanticError(f"Cannot assign value of type {type} to a variable of type {self.symbol_table[statement.identifier]["type"]}")
                 number = int(self.symbol_table[statement.value]["value"])
             elif isinstance(statement.value, AddOperator):
-                if statement.value.left in self.symbol_table:
-                    if self.symbol_table[statement.value.left]["type"] == self.symbol_table[statement.identifier]["type"]:
-                        number = int(self.symbol_table[statement.value.left]["value"])
-                    else:
-                        raise SemanticError(f"Cannot assign value of type {self.symbol_table[statement.value.left]["type"]} to a variable of type {self.symbol_table[statement.identifier]["type"]}")
-                else:
-                    if int(statement.value.left) >= 0 and int(statement.value.left) <= 255:
-                        number = int(statement.value.left)
-                    else:
-                        raise SemanticError(f"{statement.value.left} is outside of range for type uint8")
-
-                if statement.value.right in self.symbol_table:
-                    if self.symbol_table[statement.value.right]["type"] == self.symbol_table[statement.identifier]["type"]:
-                        number += int(self.symbol_table[statement.value.right]["value"])
-                    else:
-                        raise SemanticError(f"Cannot assign value of type {self.symbol_table[statement.value.right]["type"]} to a variable of type {self.symbol_table[statement.identifier]["type"]}")
-                else:
-                    if int(statement.value.right) >= 0 and int(statement.value.right) <= 255:
-                        number += int(statement.value.right)
-                    else:
-                        raise SemanticError(f"{statement.value.right} is outside of range for type uint8") 
+                number = self._analyze_add_operator(statement.identifier, self.symbol_table[statement.identifier]["type"], statement.value.left, statement.value.right)
+            
             else:
                 number = int(statement.value)
 
@@ -207,9 +244,53 @@ class SemanticAnalyzer:
             else:
                 raise SemanticError(f"{statement.identifier} can only be true or false")        
 
-    def _analyze_print_function(self, statement):
-        if statement.statement_type == TokenType.IDENTIFIER and statement.statement not in self.symbol_table:
-            raise SemanticError(f"Variable '{statement.statement}' hasn't been declared yet")
+    def _analyze_add_operator(self, identifier, type, left, right):
+        number = 0
 
+        # Process left operand
+        if left in self.symbol_table:
+            if self.symbol_table[left]["type"] == type:
+                number = int(self.symbol_table[left]["value"])
+            else:
+                raise SemanticError(f"Cannot assign value of type {self.symbol_table[left]['type']} to a variable of type {type}")
+        else:
+            if type == "int8":
+                if int(left) >= -128 and int(left) <= 127:
+                    number = int(left)
+                else:
+                    raise SemanticError(f"{left} is outside of range for type int8")
+            elif type == "uint8":
+                if int(left) >= 0 and int(left) <= 255:
+                    number = int(left)
+                else:
+                    raise SemanticError(f"{left} is outside of range for type uint8")
 
-    
+        # Process right operand (ADD to number)
+        if right in self.symbol_table:
+            if self.symbol_table[right]["type"] == type:
+                number += int(self.symbol_table[right]["value"]) 
+            else:
+                raise SemanticError(f"Cannot assign value of type {self.symbol_table[right]['type']} to a variable of type {type}")
+        else:
+            if type == "int8":
+                if int(right) >= -128 and int(right) <= 127:
+                    number += int(right) 
+                else:
+                    raise SemanticError(f"{right} is outside of range for type int8")
+            elif type == "uint8":
+                if int(right) >= 0 and int(right) <= 255:
+                    number += int(right)  
+                else:
+                    raise SemanticError(f"{right} is outside of range for type uint8")
+
+        # Check final result is in range
+        if type == "int8":
+            if number >= -128 and number <= 127:
+                return number
+            else:
+                raise SemanticError(f"{number} is outside of range for type int8")
+        elif type == "uint8": 
+            if number >= 0 and number <= 255:
+                return number
+            else:
+                raise SemanticError(f"{number} is outside of range for type uint8")

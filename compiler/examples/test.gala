@@ -7,13 +7,13 @@ x = z
 y = 3
 z = add(x, y)
 
-reg test: int8 @ x12 = 1
-test = add(2, 3)
-print(test)
+reg test: int8 @ x12 = add(y, z)
 
 reg a: char @ x14 = 'a'
 reg b: bool @ x13 = true
 reg c: char @ x15 = 'c'
-print(b)
 a = c
 b = false
+
+alloc(stack, 32)
+stack testStack: int8 = add(1, z)

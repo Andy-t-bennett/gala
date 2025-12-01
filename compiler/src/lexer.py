@@ -9,11 +9,12 @@ class Lexer:
         "bool": TokenType.BOOL,
         "char": TokenType.CHAR,
         "reg": TokenType.REG,
-        "print": TokenType.PRINT,
         "add": TokenType.ADD,
         "sub": TokenType.SUB,
         "true": TokenType.TRUE,
-        "false": TokenType.FALSE
+        "false": TokenType.FALSE,
+        "stack": TokenType.STACK,
+        "alloc": TokenType.ALLOC
     }
 
     def __init__(self, source_code):

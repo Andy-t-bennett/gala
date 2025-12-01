@@ -1,25 +1,91 @@
 ## Modern Assembly
 
 - Registers
-  - 0-7 Used to pass the first eight integer or pointer arguments to a function. If there are more, the stack is used. Also used to return values.
+  - 0-7 Used to pass the first eight integer or pointer arguments to a function. If there are more, the stack is used. Also used to return values (x0 for single values, x0-x1 for 128-bit values).
   - 8 Used for indirect return value addresses or as a temporary register.
   - 9-15 Volatile/caller-saved registers, meaning the caller function must save their values if needed across a function call. Used for general-purpose temporary storage.
   - 16-17 Used for inter-procedure linkage, often by the dynamic linker/loader.
+    - 16 used for syscalls on macOS (Darwin-specific extension)
   - 18 Platform register; its use may vary by OS.
   - 19-28 Non-volatile/callee-saved registers. The called function (callee) is responsible for preserving their values before using them and restoring them before returning.
-  - 29 Frame Pointer (FP), used to manage stack frames.
-  - 30 Link Register (LR), holds the return address of a function call.
-  - sp Stack Pointer, points to the top of the current stack frame.
+  - 29 Frame Pointer (FP), used to manage stack frames and point to the current function's stack frame base.
+  - 30 Link Register (LR), holds the return address of a function call (where to return after function completes).
+  - 31 Can be used as Stack Pointer (SP) or Zero Register (XZR/WZR) depending on context.
+  - sp Stack Pointer, points to the top of the current stack frame (lowest address, stack grows downward).
+
+Memory 
+
+Stack
+- Fast: just adjust stack pointer
+- Automatic - cleaned up when function returns
+- fixed size: known at compile time
+- limited scope: only lives during function
+- limited size: stack overflow if too big
+- 1 allocation per function, must be deallocated at the end
+Heap
+- flixible size: allocated at runtime
+- ling lived: exists until you free it
+- large allocations: megabytes/gigabytes
+- slower: syscall overhead
+- manual management: must free or leak memory
+
+Memory Address Layout (ARM64 macOS typical):
+
+0xFFFFFFFF_FFFFFFFF  ← High memory (top)
+    |
+    | [Kernel space]
+    |
+0x00007FFF_FFFFFFFF
+    |
+    | [Stack grows DOWN ↓]
+    | [Your variables here]
+    | sp → [Current top of stack]
+    |
+    |     ... (unused space)
+    |
+    | [Heap grows UP ↑]
+    | [Dynamic allocations]
+    |
+    | [Data segment] (.data, .bss)
+    | [Code segment] (.text)
+    |
+0x00000001_00000000  ← Low memory (bottom)
+
+sp → 0x0FF0  ┌─────────────┐  ← Each row is ONE offset
+      +0     │     5       │  ← 4 bytes (bytes 0-3)
+      +4     │             │  ← 4 bytes (bytes 4-7)
+      +8     │             │  ← 4 bytes (bytes 8-11)
+      +12    │             │  ← 4 bytes (bytes 12-15)
+      0x1000 └─────────────┘
+
+Caller's frame:
+      ┌─────────────┐
+      │ caller vars │
+      ├─────────────┤ ← Caller's x29 points here
+      │  saved x29  │
+      │  saved x30  │
+      ├─────────────┤ ← Current sp (our x29)
+Your frame:
+      │  var a      │ ← [x29, #-16] or [sp, #0]
+      │  var b      │ ← [x29, #-12] or [sp, #4]
+      │  var c      │ ← [x29, #-8]  or [sp, #8]
+sp →  └─────────────┘
+
+// Stack: Direct access
+alloc(stack, 32)
+stack x: int8 = 5
+
+// Heap: Pointer-based (shows what's really happening)
+heap y: ptr = alloc(heap, 64)
+store(y, 5)
+value = load(y)
+free(heap, y)
 
 - Variable Declaration
     
     ```jsx
-    reg x: int8 @ x0
-	x = 5
-
-	// or
-
-	reg y: uint8 @ x1 = 5
+    // register
+    reg y: uint8 @ x1 = 5
     ```
     
 - Types
@@ -51,8 +117,9 @@
     clear x (zeros out register)
     
     // later this will be used for stack and heap
-    stack b: int @ -8
-    heap p: ptr @ alloc(32)
+    stack b: int8 = 5
+    heap a: int8 = 5;            // Allocates 4 bytes (aligned int8)
+    heap arr: int8[32]; 
 
     // some way to potentially move a value from reg to stack/heap
     mov(to, from) (x, y)
@@ -84,6 +151,11 @@ run
 
 TODO:
 - declare stack
+  - Need to add check to make sure alloc first before stack called
+  - need to add semantic analyzer for stack
+  - need to add codegen for stack
+
+
  - declare heap
 - move
 - spill 
@@ -98,4 +170,6 @@ TODO:
 - rest of operators
 
 - data structures (array, struct, strings)
+
+- comments
 

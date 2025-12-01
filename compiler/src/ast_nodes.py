@@ -1,8 +1,16 @@
 class RegisterDecleration:
-    def __init__(self, name=None, type=None, register=None, value=None):
+    def __init__(self, name=None, storage=None, type=None, register=None, value=None):
         self.name = name
+        self.storage = storage
         self.type = type
         self.register = register
+        self.value = value
+
+class StackDecleration:
+    def __init__(self, name=None, storage=None, type=None, value=None):
+        self.name = name
+        self.storage = storage
+        self.type = type
         self.value = value
 
 class AddOperator:
@@ -16,7 +24,7 @@ class VariableAssignment:
         self.value = value
         self.value_type = value_type
 
-class PrintFunction:
-    def __init__(self, statement=None, statement_type=None):
-        self.statement = statement
-        self.statement_type = statement_type
+class MemoryAlloc:
+    def __init__(self, storage=None, value=None):
+        self.storage = storage
+        self.value = value

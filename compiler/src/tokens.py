@@ -9,8 +9,9 @@ class TokenType(Enum):
 
     # keywords
     REG = auto()
-    PRINT = auto()
     CLEAR = auto()
+    STACK = auto()
+    ALLOC = auto()
 
     # identifiers and values
     IDENTIFIER = auto()
