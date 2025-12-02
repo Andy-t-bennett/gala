@@ -28,7 +28,7 @@ class SemanticAnalyzer:
             if isinstance(statement, RegisterDecleration):
                 self._analyze_register_declaration(statement)
             elif isinstance(statement, StackDecleration):
-                self._analyze_stack_decleration(statement)
+                self._analyze_stack_decleration(statement, program)
             elif isinstance(statement, VariableAssignment):
                 self._analyze_variable_assignment(statement)
 
@@ -105,12 +105,34 @@ class SemanticAnalyzer:
         else:
             raise SemanticError(f"No Type declared")
 
-    def _analyze_stack_decleration(self, statement):
+    def _analyze_stack_decleration(self, statement, program):
         if statement.name in self.RESERVED_KEYWORDS:
             raise SemanticError(f"Variable '{statement.name}' cannot be a reserved word")
 
         if statement.name in self.symbol_table:
             raise SemanticError(f"Variable '{statement.name}' already declared")
+
+        memoryAllocated = False
+        stackIndex = 0
+        for i in range(len(program.statements)):
+            if stackIndex == 0 and isinstance(program.statements[i], StackDecleration):
+                stackIndex = i
+
+            if isinstance(program.statements[i], MemoryAlloc) and stackIndex == 0:
+                memoryAllocated = True
+                break
+
+            if stackIndex != 0:
+                raise SemanticError(f"You must allocate memory before using stack decleration.")
+
+        if memoryAllocated == False:
+            raise SemanticError(f"You must allocate memory before using stack decleration.")
+
+        # get current offset
+        current_offset = 0
+        for name, info in self.symbol_table.items():
+            if info["storage"] == "stack":
+                current_offset += info.get("size", 4)
 
         if statement.type == "int8":
             if isinstance(statement.value, AddOperator):
@@ -120,10 +142,11 @@ class SemanticAnalyzer:
             
             if number >= -128 and number <= 127:
                 self.symbol_table[statement.name] = {
+                    "storage": "stack",
                     "type": statement.type,
-                    "storage": "register",
-                    "register": statement.register,
-                    "value": number  
+                    "value": number,
+                    "offset": current_offset,
+                    "size": 4
                 }
             else:
                 raise SemanticError(f"{number} is outside of range for type int8")
@@ -136,10 +159,11 @@ class SemanticAnalyzer:
             
             if number >= 0 and number <= 255:
                 self.symbol_table[statement.name] = {
+                    "storage": "stack",
                     "type": statement.type,
-                    "storage": "register",
-                    "register": statement.register,
-                    "value": number  
+                    "value": number,
+                    "offset": current_offset,
+                    "size": 4
                 }
             else:
                 raise SemanticError(f"{number} is outside of range for type uint8")
@@ -148,9 +172,11 @@ class SemanticAnalyzer:
             character = statement.value
             if len(character) == 1:
                 self.symbol_table[statement.name] = {
-                    "type": statement.type,
                     "storage": "stack",
-                    "value": statement.value
+                    "type": statement.type,
+                    "value": number,
+                    "offset": current_offset,
+                    "size": 4  
                 }
             else:
                 raise SemanticError(f"Only 1 character allowed for type CHAR")
@@ -159,9 +185,11 @@ class SemanticAnalyzer:
             boolean = statement.value
             if boolean == "true" or boolean == "false":
                 self.symbol_table[statement.name] = {
-                    "type": statement.type,
                     "storage": "stack",
-                    "value": statement.value
+                    "type": statement.type,
+                    "value": number,
+                    "offset": current_offset,
+                    "size": 4  
                 }
             else:
                 raise SemanticError(f"Only true or false values allowed for boolean type")

@@ -1,5 +1,5 @@
 from tokens import TokenType
-from ast_nodes import RegisterDecleration, VariableAssignment, AddOperator
+from ast_nodes import RegisterDecleration, VariableAssignment, AddOperator, StackDecleration, MemoryAlloc
 
 class Codegen:
     def __init__(self, symbol_table, statements):
@@ -8,26 +8,40 @@ class Codegen:
         self.assembly_code = []
 
     def generate(self):
-        self._header()
+        stack_size = 0
+        for statement in self.statements:
+            if isinstance(statement, MemoryAlloc):
+                stack_size = int(statement.value)
+                break
+        self._header(stack_size)
 
         for statement in self.statements:
             if isinstance(statement, RegisterDecleration):
                 self._generate_register_decleration(statement)
             elif isinstance(statement, VariableAssignment):
                 self._generate_variable_assignment(statement)
+            elif isinstance(statement, StackDecleration):
+                self._generate_stack_decleration(statement)
 
-        self._footer()
+        self._footer(stack_size)
         return '\n'.join(self.assembly_code)
 
-    def _header(self):
+    def _header(self, stack_size):
         # TODO: Add allocation for functions 
         self.assembly_code.append('.global _start')
         self.assembly_code.append('.align 2')
         self.assembly_code.append('')
         self.assembly_code.append('_start:')
+
+        if stack_size > 0:
+            self.assembly_code.append(f'    sub sp, sp, #{stack_size}')
+
+        self.assembly_code.append('')
         
-    def _footer(self):
-        # TODO: Add deallocation for stack pointer
+    def _footer(self, stack_size):
+        if stack_size > 0:
+            self.assembly_code.append(f'    add sp, sp, #{stack_size}')
+
         self.assembly_code.append('')
         self.assembly_code.append('    mov x0, #0')
         self.assembly_code.append('    mov x16, #1')
@@ -46,6 +60,8 @@ class Codegen:
         elif statement.type == 'char':
             value = self.symbol_table[statement.name]['value']
             self.assembly_code.append(f'    mov {statement.register}, #{ord(value)}')
+
+        self.assembly_code.append('')
 
     def _generate_variable_assignment(self, statement):
         if statement.value in self.symbol_table:
@@ -81,3 +97,14 @@ class Codegen:
                 self.assembly_code.append(f'    mov {self.symbol_table[statement.identifier]['register']}, #1')
             elif statement.value_type == TokenType.FALSE:
                 self.assembly_code.append(f'    mov {self.symbol_table[statement.identifier]['register']}, #0')
+        
+        self.assembly_code.append('')
+
+    def _generate_stack_decleration(self, statement):
+        offset = self.symbol_table[statement.name]["offset"]
+        value = self.symbol_table[statement.name]["value"]
+
+        self.assembly_code.append(f'    mov x8, #{value}')
+        self.assembly_code.append(f'    str x8, [sp, #{offset}]')
+
+        self.assembly_code.append('')

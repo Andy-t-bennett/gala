@@ -7,11 +7,13 @@ class RegisterDecleration:
         self.value = value
 
 class StackDecleration:
-    def __init__(self, name=None, storage=None, type=None, value=None):
+    def __init__(self, name=None, storage=None, type=None, value=None, offset=None, size=None):
         self.name = name
         self.storage = storage
         self.type = type
         self.value = value
+        self.offset = offset
+        self.size = size
 
 class AddOperator:
     def __init__(self, left=None, right=None):

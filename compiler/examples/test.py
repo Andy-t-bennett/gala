@@ -78,6 +78,14 @@ semantic_table = analyzer.analyze(program)
 
 print(semantic_table)
 
+for name, info in semantic_table.items():
+    if info['storage'] == 'stack':
+        print(f"\nStack variable: {name}")
+        print(f"  Type: {info['type']}")
+        print(f"  Offset: {info['offset']}")     # ← Here's the offset!
+        print(f"  Size: {info['size']}")         # ← Here's the size!
+        print(f"  Value: {info['value']}")
+
 print("\n##### CODEGEN #####")
 codegen = Codegen(semantic_table, program.statements)
 assembly = codegen.generate()

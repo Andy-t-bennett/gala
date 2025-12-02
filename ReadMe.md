@@ -3,6 +3,8 @@
 - Registers
   - 0-7 Used to pass the first eight integer or pointer arguments to a function. If there are more, the stack is used. Also used to return values (x0 for single values, x0-x1 for 128-bit values).
   - 8 Used for indirect return value addresses or as a temporary register.
+    - using for stack allocation to avoid overwritting any general registers
+    - ARM doesn't allow direct to stack , must store value in register first
   - 9-15 Volatile/caller-saved registers, meaning the caller function must save their values if needed across a function call. Used for general-purpose temporary storage.
   - 16-17 Used for inter-procedure linkage, often by the dynamic linker/loader.
     - 16 used for syscalls on macOS (Darwin-specific extension)
@@ -12,6 +14,8 @@
   - 30 Link Register (LR), holds the return address of a function call (where to return after function completes).
   - 31 Can be used as Stack Pointer (SP) or Zero Register (XZR/WZR) depending on context.
   - sp Stack Pointer, points to the top of the current stack frame (lowest address, stack grows downward).
+    - is updated automatically as memory is allocated for the stack
+  - pc Program counter, track which instruction to execute
 
 Memory 
 
@@ -22,6 +26,7 @@ Stack
 - limited scope: only lives during function
 - limited size: stack overflow if too big
 - 1 allocation per function, must be deallocated at the end
+- In arm, stack is set by subtracting, going down
 Heap
 - flixible size: allocated at runtime
 - ling lived: exists until you free it
@@ -150,26 +155,30 @@ run
 ./program
 
 TODO:
-- declare stack
-  - Need to add check to make sure alloc first before stack called
-  - need to add semantic analyzer for stack
-  - need to add codegen for stack
 
-
- - declare heap
-- move
-- spill 
-- copy
-- free
-
-- functions
-- return
+HIGH PRIORITY (Foundation):
+- comments (easy, do this anytime!)
 - if/else
-- loops
+- loops (while, for)
+- comparison operators (==, !=, <, >, <=, >=)
+- boolean operators (and, or, not)
+- functions + return (do together)
 
-- rest of operators
+MEDIUM PRIORITY (More Features):
+- rest of arithmetic operators (-, *, /, %)
+- arrays
+- strings
+- heap allocation/free
 
-- data structures (array, struct, strings)
+LOW PRIORITY (Advanced):
+- structs
+- pointers (if not done with heap)
+- register spilling (when you run out of registers)
+- move semantics
+- copy semantics
 
-- comments
+OPTIMIZATION (Much Later):
+- register allocation optimization
+- dead code elimination
+- constant folding
 

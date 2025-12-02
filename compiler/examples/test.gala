@@ -17,3 +17,4 @@ b = false
 
 alloc(stack, 32)
 stack testStack: int8 = add(1, z)
+stack testStack2: int8 = 6
