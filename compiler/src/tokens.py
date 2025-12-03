@@ -12,6 +12,15 @@ class TokenType(Enum):
     CLEAR = auto()
     STACK = auto()
     ALLOC = auto()
+    IF = auto()
+    ELSE = auto()
+    END = auto()
+    EQ = auto()
+    NE = auto()
+    LT = auto()
+    GT = auto()
+    LE = auto()
+    GE = auto()
 
     # identifiers and values
     IDENTIFIER = auto()
@@ -31,7 +40,6 @@ class TokenType(Enum):
     # operators
     EQUALS = auto()
     ADD = auto()
-    SUB = auto()
 
     EOF = auto()
 

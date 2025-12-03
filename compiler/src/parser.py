@@ -1,4 +1,4 @@
-from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc
+from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc, Comparison, IfStatement
 from tokens import TokenType
 
 class Parser:
@@ -20,6 +20,8 @@ class Parser:
                 program.statements.append(self._parse_variable_assignment())
             elif token.type == TokenType.ALLOC:
                 program.statements.append(self._parse_memory_allocation())
+            elif token.type == TokenType.IF:
+                program.statements.append(self._parse_if_statement())
             else:
                 self.position += 1
 
@@ -156,7 +158,7 @@ class Parser:
             addOperator.left = self.tokens[self.position].value
             self.position += 1
         else:
-            raise SyntaxError("ADD OPERATOR: Expected a number")
+            raise SyntaxError("ADD OPERATOR: Left value must be an int/uint")
 
         if self.tokens[self.position].type == TokenType.COMA:
             self.position += 1
@@ -167,7 +169,7 @@ class Parser:
             addOperator.right = self.tokens[self.position].value
             self.position += 1
         else:
-            raise SyntaxError("ADD OPERATOR: Expected a number")
+            raise SyntaxError("ADD OPERATOR: Right value must be an int/uint")
 
         if self.tokens[self.position].type == TokenType.R_PAREN:
             self.position += 1
@@ -208,6 +210,118 @@ class Parser:
             raise SyntaxError("ALLOC: Expected )")
 
         return memoryAlloc
+
+    def _parse_if_statement(self):
+        ifStatement = IfStatement()
+        comparison = Comparison()
+        self.position += 1
+
+        if self.tokens[self.position].type in [TokenType.EQ, TokenType.NE, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE]:
+            comparison.operator = self.tokens[self.position].value
+            self.position += 1
+        else:
+            raise SyntaxError("IF STATEMENT: Expected a comparison")
+
+        if self.tokens[self.position].type == TokenType.L_PAREN:
+            self.position += 1
+        else:
+            raise SyntaxError("IF STATEMENT: Expected a (")
+
+        if self.tokens[self.position].type == TokenType.IDENTIFIER or self.tokens[self.position].type == TokenType.NUMBER or self.tokens[self.position].type == TokenType.CHAR or self.tokens[self.position].type == TokenType.BOOL:
+            if self.tokens[self.position].type == TokenType.IDENTIFIER:
+                comparison.left = self.tokens[self.position].value
+                comparison.left_type = TokenType.IDENTIFIER
+            else:
+                if self.tokens[self.position].type == TokenType.NUMBER:
+                    comparison.left = self.tokens[self.position].value
+                    comparison.left_type = TokenType.NUMBER
+                elif self.tokens[self.position].type == TokenType.CHAR:
+                    comparison.left = self.tokens[self.position].value
+                    comparison.left_type = TokenType.CHAR
+                else:
+                    comparison.left = self.tokens[self.position].value
+                    comparison.left_type = TokenType.CHAR
+            self.position += 1
+        else:
+            raise SyntaxError("IF STATEMENT: Expected a left value")
+
+        if self.tokens[self.position].type == TokenType.COMA:
+            self.position += 1
+        else:
+            raise SyntaxError("IF STATEMENT: Expected a ,")
+        
+        if self.tokens[self.position].type == TokenType.IDENTIFIER or self.tokens[self.position].type == TokenType.NUMBER or self.tokens[self.position].type == TokenType.CHAR or self.tokens[self.position].type == TokenType.BOOL:
+            if self.tokens[self.position].type == TokenType.IDENTIFIER:
+                comparison.right = self.tokens[self.position].value
+                comparison.right_type = TokenType.IDENTIFIER
+            else:
+                if self.tokens[self.position].type == TokenType.NUMBER:
+                    comparison.right = self.tokens[self.position].value
+                    comparison.right_type = TokenType.NUMBER
+                elif self.tokens[self.position].type == TokenType.CHAR:
+                    comparison.right = self.tokens[self.position].value
+                    comparison.right_type = TokenType.CHAR
+                else:
+                    comparison.right = self.tokens[self.position].value
+                    comparison.right_type = TokenType.BOOL
+            self.position += 1
+        else:
+            raise SyntaxError("IF STATEMENT: Expected a right value")
+
+        if self.tokens[self.position].type == TokenType.R_PAREN:
+            self.position += 1
+        else:
+            raise SyntaxError("IF STATEMENT: Expected a )")
+
+        ifStatement.comparison = comparison
+
+        ifStatement.then_body = self._parse_block()
+
+        if self.position >= len(self.tokens):
+            raise SyntaxError("IF STATEMENT: Unexpected end of file, expected 'end'")
+
+        if self.tokens[self.position].type == TokenType.ELSE:
+            self.position += 1
+            if self.tokens[self.position].type == TokenType.COLON:
+                self.position += 1
+            else:
+                raise SyntaxError("IF STATEMENT: Espected : after else")
+
+            ifStatement.else_body = self._parse_block()
+
+        if self.position >= len(self.tokens):
+            raise SyntaxError("IF STATEMENT: Unexpected end of file, expected 'end'")
+
+        if self.tokens[self.position].type == TokenType.END:
+            self.position += 1
+        else:
+            raise SyntaxError("IF STATEMENT: Expected end")
+
+        return ifStatement
+
+    def _parse_block(self):
+        statements = []
+
+        while self.position < len(self.tokens):
+            token = self.tokens[self.position]
+            
+            if token.type == TokenType.ELSE or token.type == TokenType.END:
+                break
+                
+            if token.type == TokenType.REG:
+                statements.append(self._parse_register_decleration())
+            elif token.type == TokenType.STACK:
+                statements.append(self._parse_stack_decleration())
+            elif token.type == TokenType.IDENTIFIER:
+                statements.append(self._parse_variable_assignment())
+            elif token.type == TokenType.ALLOC:
+                statements.append(self._parse_memory_allocation())
+            elif token.type == TokenType.IF:  
+                statements.append(self._parse_if_statement())  
+            else:
+                self.position += 1
+        
+        return statements
 
 
 class Program:

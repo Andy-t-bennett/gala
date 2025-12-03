@@ -10,11 +10,20 @@ class Lexer:
         "char": TokenType.CHAR,
         "reg": TokenType.REG,
         "add": TokenType.ADD,
-        "sub": TokenType.SUB,
         "true": TokenType.TRUE,
         "false": TokenType.FALSE,
         "stack": TokenType.STACK,
-        "alloc": TokenType.ALLOC
+        "alloc": TokenType.ALLOC,
+        "if": TokenType.IF,
+        "else": TokenType.ELSE,
+        "end": TokenType.END,
+        "eq": TokenType.EQ,
+        "ne": TokenType.NE,
+        "lt": TokenType.LT,
+        "gt": TokenType.GT,
+        "le": TokenType.LE,
+        "ge": TokenType.GE
+
     }
 
     def __init__(self, source_code):

@@ -1,5 +1,5 @@
 from tokens import TokenType
-from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc
+from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc, Comparison, IfStatement
 
 # TODO handle error handling here
 class SemanticError(Exception):
@@ -16,7 +16,11 @@ class SemanticAnalyzer:
         'false',
         'add',
         'stack',
-        'alloc'
+        'alloc',
+        'if',
+        'else',
+        'end',
+        'eq'
     ]
 
     def __init__(self):
@@ -31,6 +35,8 @@ class SemanticAnalyzer:
                 self._analyze_stack_decleration(statement, program)
             elif isinstance(statement, VariableAssignment):
                 self._analyze_variable_assignment(statement)
+            elif isinstance(statement, IfStatement):
+                self._analyze_if_statement(statement, program)
 
         return self.symbol_table
 
@@ -322,3 +328,44 @@ class SemanticAnalyzer:
                 return number
             else:
                 raise SemanticError(f"{number} is outside of range for type uint8")
+
+    def _analyze_if_statement(self, statement, program):
+        # TODO: make sure if the values in are ok
+        left = statement.comparison.left
+        left_type = statement.comparison.left_type
+        right = statement.comparison.right
+        right_type = statement.comparison.right_type
+
+        if left_type == TokenType.IDENTIFIER:
+            if left in self.symbol_table:
+                variable_value = self.symbol_table[left]["value"]
+                left = variable_value
+            else:
+                raise SemanticError(f"SEMANTIC ANALYZER: value {left} has not been declared yet")
+
+        if right_type == TokenType.IDENTIFIER:
+            if right in self.symbol_table:
+                variable_value = self.symbol_table[right]["value"]
+                right = variable_value
+            else:
+                raise SemanticError(f"SEMANTIC ANALYZER: value {right} has not been declared yet")
+
+        for item in statement.then_body:
+            if isinstance(item, RegisterDecleration):
+                self._analyze_register_declaration(item)
+            elif isinstance(item, StackDecleration):
+                self._analyze_stack_decleration(item, program)
+            elif isinstance(item, VariableAssignment):
+                self._analyze_variable_assignment(item)
+            elif isinstance(item, IfStatement):
+                self._analyze_if_statement(item, program)
+
+        for item in statement.else_body:
+            if isinstance(item, RegisterDecleration):
+                self._analyze_register_declaration(item)
+            elif isinstance(item, StackDecleration):
+                self._analyze_stack_decleration(item, program)
+            elif isinstance(item, VariableAssignment):
+                self._analyze_variable_assignment(item)
+            elif isinstance(item, IfStatement):
+                self._analyze_if_statement(item, program)

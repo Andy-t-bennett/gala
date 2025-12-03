@@ -1,5 +1,5 @@
 from tokens import TokenType
-from ast_nodes import RegisterDecleration, VariableAssignment, AddOperator, StackDecleration, MemoryAlloc
+from ast_nodes import RegisterDecleration, VariableAssignment, AddOperator, StackDecleration, MemoryAlloc, Comparison, IfStatement
 
 class Codegen:
     def __init__(self, symbol_table, statements):
@@ -22,6 +22,8 @@ class Codegen:
                 self._generate_variable_assignment(statement)
             elif isinstance(statement, StackDecleration):
                 self._generate_stack_decleration(statement)
+            elif isinstance(statement, IfStatement):
+                self._generate_if_statement(statement)
 
         self._footer(stack_size)
         return '\n'.join(self.assembly_code)
@@ -108,3 +110,6 @@ class Codegen:
         self.assembly_code.append(f'    str x8, [sp, #{offset}]')
 
         self.assembly_code.append('')
+
+    def _generate_if_statement(self, statement):
+        print()

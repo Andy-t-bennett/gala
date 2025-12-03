@@ -30,3 +30,17 @@ class MemoryAlloc:
     def __init__(self, storage=None, value=None):
         self.storage = storage
         self.value = value
+
+class Comparison:
+    def __init__(self, operator=None, left=None, left_type=None, right_type=None, right=None):
+        self.operator = operator
+        self.left = left
+        self.left_type = left_type
+        self.right = right
+        self.right_type = right_type
+
+class IfStatement:
+    def __init__(self, comparison=None, then_body=None, else_body=None):
+        self.comparison = comparison
+        self.then_body = then_body or []
+        self.else_body = else_body or []

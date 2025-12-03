@@ -115,6 +115,22 @@ free(heap, y)
     print() // bl _printf
     ```
     
+- Conditionals
+  - if/else: match with arm conditionls
+  if eq(x, y): - equal (matches b.eq)
+  if ne(x, y): - not equal (matches b.ne)
+  if lt(x, y): - less than (matches b.lt)
+  if gt(x, y): - greater than (matches b.gt)
+  if le(x, y): - less than or equal (matches b.le)
+  if ge(x, y): - greater than or equal (matches b.ge)
+
+  if_eq(x, y):
+    do something
+  else:
+    do something else
+  end
+
+
 - future ideas
     
     ```jsx
@@ -181,4 +197,8 @@ OPTIMIZATION (Much Later):
 - register allocation optimization
 - dead code elimination
 - constant folding
+- debugs
+- better error handling
+  - consolidated error class
+  - location of error
 

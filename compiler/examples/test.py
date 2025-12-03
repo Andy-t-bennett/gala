@@ -5,7 +5,7 @@ sys.path.append('../src')
 
 from lexer import Lexer
 from parser import Parser
-from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc
+from ast_nodes import RegisterDecleration, StackDecleration, VariableAssignment, AddOperator, MemoryAlloc, Comparison, IfStatement
 from semantic_analyzer import SemanticAnalyzer
 from codegen import Codegen
 
@@ -70,6 +70,46 @@ for statement in program.statements:
         print(f"MemoryAlloc:")
         print(f"  storage: {statement.storage}")
         print(f"  value: {statement.value}")
+        print()
+
+    elif isinstance(statement, Comparison):
+        print(f"Comparison:")
+        print(f"  operator: {statement.operator}")
+        print(f"  left: {statement.left}")
+        print(f"  right: {statement.right}")
+        print()
+
+    elif isinstance(statement, IfStatement):
+        print(f"IfStatement:")
+        print(f"  comparison: {statement.comparison.operator}")
+        print(f"    left: {statement.comparison.left}")
+        print(f"    right: {statement.comparison.right}")
+        
+        print(f"  then_body:")
+        for s in statement.then_body:
+            if isinstance(s, VariableAssignment):
+                print(f"    VariableAssignment:")
+                print(f"      identifier: {s.identifier}")
+                print(f"      value: {s.value}")
+            elif isinstance(s, RegisterDecleration):
+                print(f"    RegisterDeclaration:")
+                print(f"      name: {s.name}")
+                print(f"      register: {s.register}")
+                print(f"      value: {s.value}")
+            # Add other statement types as needed
+        
+        print(f"  else_body:")
+        for s in statement.else_body:
+            if isinstance(s, VariableAssignment):
+                print(f"    VariableAssignment:")
+                print(f"      identifier: {s.identifier}")
+                print(f"      value: {s.value}")
+            elif isinstance(s, RegisterDecleration):
+                print(f"    RegisterDeclaration:")
+                print(f"      name: {s.name}")
+                print(f"      register: {s.register}")
+                print(f"      value: {s.value}")
+            # Add other statement types as needed
         print()
 
 print("\n##### SEMANTIC ANALYZER #####")
