@@ -1,42 +1,25 @@
-from enum import Enum, auto
+class TokenType():
+    # Keywords
+    REG = "REG"
+    INT8 = "INT8"
 
-class TokenType(Enum):
-    # types
-    INT8 = auto()
-    UINT8 = auto()
-    BOOL = auto()
-    CHAR = auto()
-
-    # keywords
-    REG = auto()
-    CLEAR = auto()
-    STACK = auto()
-    ALLOC = auto()
-
-    # identifiers and values
-    IDENTIFIER = auto()
-    REGISTER = auto()
-    NUMBER = auto()
-    CHARACTER = auto()
-    TRUE = auto()
-    FALSE = auto()
+    # Values
+    REGISTER = "REGISTER"
+    IDENTIFIER = "IDENTIFIER"
+    INTEGER_VALUE = "INTEGER"
 
     # symbols
-    COLON = auto()
-    AT = auto()
-    L_PAREN = auto()
-    R_PAREN = auto()
-    COMA = auto()
-    
-    # operators
-    EQUALS = auto()
-    ADD = auto()
-    SUB = auto()
+    COLON = ":"
+    AT = "@"
+    EQUALS = "="
 
-    EOF = auto()
-
+KEYWORDS = {
+        "reg": TokenType.REG,
+        "int8": TokenType.INT8
+    }
 
 class Token:
-    def __init__(self, type: TokenType, value: str):
+    def __init__(self, type, value, line=None):
         self.type = type
         self.value = value
+        self.line = line
