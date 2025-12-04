@@ -1,1 +1,1 @@
-- x: int8 @ x9 = 5
+reg x: int8 @ x9 = 5
